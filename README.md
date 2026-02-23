@@ -8,7 +8,7 @@ Backend API for AireMaile — an automated flight notification service for priva
 - **Framework:** Express
 - **Auth & Database:** Supabase (Postgres + RLS)
 - **Email:** Resend
-- **Flight Data:** Aviation Edge API
+- **Flight Data:** Aviationstack API (free tier)
 - **Scheduler:** node-cron
 
 ## Getting Started
@@ -25,12 +25,19 @@ npm run dev
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
-| GET | `/api/flights/arrivals` | Get arrivals at an airport, filtered by airline |
-| GET | `/api/flights/live` | Get live flights for an airline |
+| GET | `/api/flights/arrivals?airport=KDAL&airline=AA` | Get arrivals at an airport, filtered by airline |
+| GET | `/api/flights/live?airline=AA` | Get live/active flights for an airline |
 | GET | `/api/fbos` | List FBOs for your org |
 | POST | `/api/fbos` | Register a new FBO |
 | DELETE | `/api/fbos/:id` | Remove an FBO |
 | POST | `/api/notifications/send` | Manually trigger an FBO notification |
+
+## Aviationstack Free Tier Notes
+
+- **100 requests/month** — conserve by not polling too aggressively
+- **HTTP only** (no HTTPS on free tier) — do not send sensitive data through the flight API
+- Upgrade to Basic ($49.99/mo) for HTTPS + 10,000 requests/month
+- Sign up at https://aviationstack.com/signup/free
 
 ## Supabase Tables
 

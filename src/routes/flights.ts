@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
-import { getArrivalsAtAirport, getLiveFlightsByAirline } from '../services/aviationEdge';
+import { getArrivalsAtAirport, getLiveFlightsByAirline } from '../services/aviationstack';
 
 const router = Router();
 

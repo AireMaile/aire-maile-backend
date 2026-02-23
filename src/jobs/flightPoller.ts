@@ -1,20 +1,19 @@
 import cron from 'node-cron';
 import { supabase } from '../config/supabase';
-import { getArrivalsAtAirport } from '../services/aviationEdge';
+import { getArrivalsAtAirport } from '../services/aviationstack';
 import { sendFboArrivalNotification } from '../services/emailService';
 
-// Runs every 5 minutes
+// NOTE: Free tier = 100 requests/month. To avoid burning through them,
+// polling is set to every 60 minutes. Increase frequency on a paid plan.
 export const startFlightPolling = () => {
-  console.log('Flight poller started — checking every 5 minutes');
+  console.log('Flight poller started — checking every 60 minutes (free tier rate limit)');
 
-  cron.schedule('*/5 * * * *', async () => {
-    console.log('Polling flight arrivals...');
+  cron.schedule('0 * * * *', async () => {
+    console.log('[poller] Polling flight arrivals...');
     try {
-      // Fetch all active FBOs across all orgs
       const { data: fbos, error } = await supabase.from('fbos').select('*');
       if (error || !fbos) return;
 
-      // Fetch all org airline configs
       const { data: configs } = await supabase.from('org_airline_configs').select('*');
       if (!configs) return;
 
@@ -25,24 +24,24 @@ export const startFlightPolling = () => {
           const arrivals = await getArrivalsAtAirport(fbo.airport_iata, config.airline_iata);
 
           for (const flight of arrivals) {
-            if (['active', 'scheduled'].includes(flight.status)) {
+            if (['scheduled', 'active'].includes(flight.flight_status)) {
               await sendFboArrivalNotification({
                 to: fbo.email,
                 fboName: fbo.name,
-                flightNumber: flight.flight.iataNumber,
+                flightNumber: flight.flight.iata,
                 airline: flight.airline.name,
-                origin: flight.departure.iataCode,
-                destination: flight.arrival.iataCode,
-                scheduledArrival: flight.arrival.scheduledTime,
-                estimatedArrival: flight.arrival.estimatedTime || flight.arrival.scheduledTime,
-                status: flight.status,
+                origin: flight.departure.iata,
+                destination: flight.arrival.iata,
+                scheduledArrival: flight.arrival.scheduled,
+                estimatedArrival: flight.arrival.estimated || flight.arrival.scheduled,
+                status: flight.flight_status,
               });
             }
           }
         }
       }
     } catch (err) {
-      console.error('Flight poller error:', err);
+      console.error('[poller] Error:', err);
     }
   });
 };
